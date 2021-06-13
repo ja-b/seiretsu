@@ -2,7 +2,8 @@ import string
 import unittest
 
 from seiretsu.alignment.basic import BasicAlignmentEngine
-from seiretsu.matrix.basic import CJKBasicScoringMatrix
+from seiretsu.matrix.basic import CJKBasicScoringMatrix, CJKKanaBasicScoringMatrix
+from seiretsu.universe.leeds_universe import LeedsUniverse
 
 
 class MyTestCase(unittest.TestCase):
@@ -33,9 +34,23 @@ class MyTestCase(unittest.TestCase):
 
         engine = BasicAlignmentEngine(matrix=matrix, universe=universe)
 
-        expected = [('財閥解体\n||  \n財閥--', 10), ('財閥解体\n|   \n財界--', 0.0), ('財閥解体\n|   \n財布--', 0.0), ('財閥解体\n    \n日本料理', 0.0), ('財閥解体-\n     \n無形文化財', -5.0)]
+        expected = [('財閥解体\n||  \n財閥--', 10), ('財閥解体\n|   \n財界--', 0.0), ('財閥解体\n|   \n財布--', 0.0),
+                    ('財閥解体\n    \n日本料理', 0.0), ('財閥解体-\n     \n無形文化財', -5.0)]
 
         self.assertEqual(expected, engine.align("財閥解体", num_results=5, gap_penalty=-5))
+
+    def test_large_universe_alignment(self):
+        matrix = CJKKanaBasicScoringMatrix().get(match_scores=[20, 10])
+
+        universe = LeedsUniverse().get()
+
+        engine = BasicAlignmentEngine(matrix=matrix, universe=universe)
+
+        expected = [('衆院\n||\n衆院', 40), ('衆-院\n| |\n衆議院', 32.5), ('衆院\n |\n病院', 20.0), ('衆院\n |\n入院', 20.0),
+                    ('衆院\n |\n寺院', 20.0), ('衆院\n |\n退院', 20.0), ('衆院\n |\n学院', 20.0), ('衆院\n |\n医院', 20.0),
+                    ('衆院\n |\n上院', 20.0), ('衆院\n |\n参院', 20.0)]
+
+        self.assertEqual(expected, engine.align("衆院", num_results=10, gap_penalty=-7.5))
 
 
 if __name__ == '__main__':

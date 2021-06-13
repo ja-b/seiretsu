@@ -1,4 +1,5 @@
 import itertools
+from collections import ChainMap
 
 from seiretsu.matrix.scoring_matrix import ScoringMatrix
 
@@ -32,7 +33,7 @@ class BasicHeteroScoringMatrix(ScoringMatrix):
         self.matrices = [BasicScoringMatrix(itr) for itr in seeding_iterators]
 
     def get(self, *, match_scores, **kwargs):
-        return [mat.get(match_score=score) for mat, score in zip(self.matrices, match_scores)]
+        return dict(ChainMap(*[mat.get(match_score=score) for mat, score in zip(self.matrices, match_scores)]))
 
 
 def _kana_iterator():

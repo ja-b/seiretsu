@@ -18,12 +18,13 @@ class BasicAlignmentEngine(AlignmentEngine):
         def gen_results():
             for opposite in self.universe:
                 alignment = _gen_alignment_table(term, opposite, self.matrix, gap_penalty)
-                yield _resolve_global_alignment_table(alignment, term, opposite)
+                yield _unicode_resolve_global_alignment_table(alignment, term, opposite)
 
         return heapq.nlargest(num_results, gen_results(), lambda args: args[1])
 
 
-def _resolve_global_alignment_table(alignment_table, ref_sequence_left, ref_sequence_right):
+def _resolve_global_alignment_table(alignment_table, ref_sequence_left, ref_sequence_right,
+                                    align_char='|', gap_char='-', space_char=' '):
     """
     Resolves global alignment, returns the two sequences and the score.
     :param alignment_table:
@@ -46,23 +47,29 @@ def _resolve_global_alignment_table(alignment_table, ref_sequence_left, ref_sequ
     while (left, right) != (0, 0):
         prev_left, prev_right = alignment_table[(left, right)][1]
         if left == prev_left:
-            sequence_left += '-'
+            sequence_left += gap_char
             sequence_right += ref_sequence_right[right - 1]
-            matched += ' '
+            matched += space_char
         elif right == prev_right:
             sequence_left += ref_sequence_left[left - 1]
-            sequence_right += '-'
-            matched += ' '
+            sequence_right += gap_char
+            matched += space_char
         else:
             if ref_sequence_left[left - 1] == ref_sequence_right[right - 1]:
-                matched += '|'
+                matched += align_char
             else:
-                matched += ' '
+                matched += space_char
             sequence_left += ref_sequence_left[left - 1]
             sequence_right += ref_sequence_right[right - 1]
         left = prev_left
         right = prev_right
     return '\n'.join([sequence_left[::-1], matched[::-1], sequence_right[::-1]]), score
+
+
+def _unicode_resolve_global_alignment_table(*args, align_char=chr(0xFFE8), gap_char=chr(0xFFE3), space_char=chr(0x3000),
+                                            **kwargs):
+    return _resolve_global_alignment_table(*args, align_char=align_char, gap_char=gap_char, space_char=space_char,
+                                           **kwargs)
 
 
 def _gen_alignment_table(sequence_left: str, sequence_right: str, scoring_matrix: dict, gap_penalty, floor=None):

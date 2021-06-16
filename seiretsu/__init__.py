@@ -1,5 +1,5 @@
 from seiretsu.alignment.basic import BasicAlignmentEngine
-from seiretsu.matrix.basic import CJKKanaBasicScoringMatrix
+from seiretsu.matrix.cjk import CJKKanaBasicScoringMatrix
 from seiretsu.universe.leeds_universe import LeedsUniverse
 
 

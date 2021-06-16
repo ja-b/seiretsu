@@ -14,17 +14,20 @@ class BasicAlignmentEngine(AlignmentEngine):
     def load_universe(self, universe):
         self.universe = universe
 
-    def align(self, term, *, num_results, gap_penalty, **kwargs):
+    def align(self, term, *, num_results, gap_penalty, unicode=True, **kwargs):
         def gen_results():
             for opposite in self.universe:
-                alignment = _gen_alignment_table(term, opposite, self.matrix, gap_penalty)
-                yield _unicode_resolve_global_alignment_table(alignment, term, opposite)
+                alignment = _gen_alignment_table(term, opposite, self.matrix, gap_penalty, **kwargs)
+                if unicode:
+                    yield _unicode_resolve_global_alignment_table(alignment, term, opposite, **kwargs)
+                else:
+                    yield _resolve_global_alignment_table(alignment, term, opposite, **kwargs)
 
         return heapq.nlargest(num_results, gen_results(), lambda args: args[1])
 
 
 def _resolve_global_alignment_table(alignment_table, ref_sequence_left, ref_sequence_right,
-                                    align_char='|', gap_char='-', space_char=' '):
+                                    align_char='|', gap_char='-', space_char=' ', **kwargs):
     """
     Resolves global alignment, returns the two sequences and the score.
     :param alignment_table:
@@ -72,7 +75,7 @@ def _unicode_resolve_global_alignment_table(*args, align_char=chr(0xFFE8), gap_c
                                            **kwargs)
 
 
-def _gen_alignment_table(sequence_left: str, sequence_right: str, scoring_matrix: dict, gap_penalty, floor=None):
+def _gen_alignment_table(sequence_left: str, sequence_right: str, scoring_matrix: dict, gap_penalty, floor=None, sub_constant_cost=-7, **kwargs):
     """
     Common code to generate alignment table given a matrix
     :param sequence_left:
@@ -102,7 +105,7 @@ def _gen_alignment_table(sequence_left: str, sequence_right: str, scoring_matrix
         for j, c2 in list(enumerate(sequence_right)):
             j = j + 1
 
-            sub_score = scoring_matrix.get((c1, c2), 0.0)
+            sub_score = scoring_matrix.get((c1, c2), 0.0) + sub_constant_cost
             alignment_table[(i, j)] = max(
                 [
                     (alignment_table[(i - 1, j)][0] + gap_penalty, (i - 1, j)),  # Gap right
